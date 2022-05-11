@@ -2738,8 +2738,11 @@ function module.main:ADDON_LOADED()
 		module:RegisterEvents('ENCOUNTER_START','ENCOUNTER_END')
 	end
 
-	if not VMRT.RaidCheck.WeaponEnch then
-		VMRT.RaidCheck.WeaponEnch = {}
+	if not VMRT.RaidCheck.MainHandWeaponEnch then
+		VMRT.RaidCheck.MainHandWeaponEnch = {}
+	end
+	if not VMRT.RaidCheck.OffHandWeaponEnch then
+		VMRT.RaidCheck.OffHandWeaponEnch = {}
 	end
 
 	module:RegisterEvents('READY_CHECK')
@@ -3020,11 +3023,19 @@ addonMsgFrame:SetScript("OnEvent",function (self, event, ...)
 end)
 addonMsgFrame:RegisterEvent("CHAT_MSG_ADDON")
 
+local RC_Consumables = {
+	[5400] = { enchant = 5400, type = 'spell', spell = 318038 }, -- Flametongue Weapon
+	[5401] = { enchant = 5401, type = 'spell', spell = 33757  }, -- Windfury Weapon
+	[6188] = { enchant = 6188, type = 'item',  item = 171285  }, -- Shadowcore Oil
+	[6190] = { enchant = 6190, type = 'item',  item = 171286  }, -- Embalmer's Oil
+	[6198] = { enchant = 6198, type = 'item',  item = 171436  }, -- Porous Sharpening Stone
+	[6199] = { enchant = 6199, type = 'item',  item = 171438  }, -- Porous Weightstone
+	[6200] = { enchant = 6200, type = 'item',  item = 171437  }, -- Shaded Sharpening Stone
+	[6201] = { enchant = 6201, type = 'item',  item = 171439  }, -- Shaded Weightstone
+}
 
 if (not ExRT.isClassic) and UnitLevel'player' >= 60 then
 	local consumables_size = 44
-
-	local lastWeaponEnchantItem
 
 	module.consumables = CreateFrame("Frame","MRTConsumables",ReadyCheckListenerFrame)
 	module.consumables:SetPoint("BOTTOM",ReadyCheckListenerFrame,"TOP",0,5)
@@ -3303,8 +3314,6 @@ if (not ExRT.isClassic) and UnitLevel'player' >= 60 then
 			end
 		end
 
-		lastWeaponEnchantItem = lastWeaponEnchantItem or VMRT.RaidCheck.WeaponEnch[ExRT.SDB.charKey]
-
 		local offhandCanBeEnchanted
 		local offhandItemID = GetInventoryItemID("player", 17)
 		if offhandItemID then
@@ -3328,129 +3337,75 @@ if (not ExRT.isClassic) and UnitLevel'player' >= 60 then
 			end
 		end
 
-		local hasMainHandEnchant, mainHandExpiration, mainHandCharges, mainHandEnchantID, hasOffHandEnchant, offHandExpiration, offHandCharges, offHandEnchantID = GetWeaponEnchantInfo()
-		if hasMainHandEnchant then
-			self.buttons.oil.statustexture:SetTexture("Interface\\RaidFrame\\ReadyCheck-Ready")
-			self.buttons.oil.texture:SetDesaturated(false)
-			self.buttons.oil.timeleft:SetFormattedText(GARRISON_DURATION_MINUTES,ceil((mainHandExpiration or 0)/1000/60))
-
-			if mainHandEnchantID == 6190 then
-				lastWeaponEnchantItem = 171286
-			elseif mainHandEnchantID == 6188 then
-				lastWeaponEnchantItem = 171285
-			elseif mainHandEnchantID == 6200 then
-				lastWeaponEnchantItem = 171437
-			elseif mainHandEnchantID == 6198 then
-				lastWeaponEnchantItem = 171436
-			elseif mainHandEnchantID == 6201 then
-				lastWeaponEnchantItem = 171439
-			elseif mainHandEnchantID == 6199 then
-				lastWeaponEnchantItem = 171438
-			elseif mainHandEnchantID == 5401 then
-				lastWeaponEnchantItem = -33757
-			elseif mainHandEnchantID == 5400 then
-				lastWeaponEnchantItem = -318038
+		local function UpdateWeaponEnchantButton(button, hasEnchant, enchantID, expiration, savedVarName)
+			if hasEnchant then
+				button.statustexture:SetTexture("Interface\\RaidFrame\\ReadyCheck-Ready")
+				button.texture:SetDesaturated(false)
+				button.timeleft:SetFormattedText(GARRISON_DURATION_MINUTES,ceil((expiration or 0)/1000/60))
 			end
-		end
-		if offhandCanBeEnchanted and hasOffHandEnchant then
-			self.buttons.oiloh.statustexture:SetTexture("Interface\\RaidFrame\\ReadyCheck-Ready")
-			self.buttons.oiloh.texture:SetDesaturated(false)
-			self.buttons.oiloh.timeleft:SetFormattedText(GARRISON_DURATION_MINUTES,ceil((offHandExpiration or 0)/1000/60))
-		end
-		if lastWeaponEnchantItem == 171286 then
-			self.buttons.oil.texture:SetTexture(463544)
-			self.buttons.oiloh.texture:SetTexture(463544)
-		elseif lastWeaponEnchantItem == 171285 then
-			self.buttons.oil.texture:SetTexture(463543)
-			self.buttons.oiloh.texture:SetTexture(463543)
-		elseif lastWeaponEnchantItem == 171437 then
-			self.buttons.oil.texture:SetTexture(3528422)
-			self.buttons.oiloh.texture:SetTexture(3528422)
-		elseif lastWeaponEnchantItem == 171436 then
-			self.buttons.oil.texture:SetTexture(3528424)
-			self.buttons.oiloh.texture:SetTexture(3528424)
-		elseif lastWeaponEnchantItem == 171439 then
-			self.buttons.oil.texture:SetTexture(3528423)
-			self.buttons.oiloh.texture:SetTexture(3528423)
-		elseif lastWeaponEnchantItem == 171438 then
-			self.buttons.oil.texture:SetTexture(3528425)
-			self.buttons.oiloh.texture:SetTexture(3528425)
-		elseif lastWeaponEnchantItem == -33757 then
-			self.buttons.oil.texture:SetTexture(462329)
-			self.buttons.oiloh.texture:SetTexture(135814)
-		elseif lastWeaponEnchantItem == -318038 then
-			self.buttons.oil.texture:SetTexture(135814)
-			self.buttons.oiloh.texture:SetTexture(135814)
-		end
 
-		VMRT.RaidCheck.WeaponEnch[ExRT.SDB.charKey] = lastWeaponEnchantItem
+			if hasEnchant then
+				VMRT.RaidCheck[savedVarName][ExRT.SDB.charKey] = enchantID
+			else
+				enchantID = VMRT.RaidCheck[savedVarName][ExRT.SDB.charKey]
+			end
 
-		if lastWeaponEnchantItem then
-			local oilCount = GetItemCount(lastWeaponEnchantItem,false,true)
-			self.buttons.oil.count:SetText(oilCount)
-			self.buttons.oiloh.count:SetText(oilCount)
-			if type(lastWeaponEnchantItem) == 'number' and lastWeaponEnchantItem < 0 then	--for spell enchants
+			local enchantInfo = RC_Consumables[enchantID]
+			if enchantInfo then
+				local enableGlow = false
 				if not InCombatLockdown() then
-					local spellName = GetSpellInfo(-lastWeaponEnchantItem)
-					self.buttons.oil.click:SetAttribute("spell", spellName)
-					self.buttons.oil.click:Show()
-					self.buttons.oil.click.IsON = true
-					self.buttons.oil.click:SetAttribute("type", "spell")
-					local spellName = GetSpellInfo(lastWeaponEnchantItem == -33757 and 318038 or -lastWeaponEnchantItem)
-					self.buttons.oiloh.click:SetAttribute("spell", spellName)
-					self.buttons.oiloh.click:Show()
-					self.buttons.oiloh.click.IsON = true
-					self.buttons.oiloh.click:SetAttribute("type", "spell")
-				end
-				self.buttons.oil.count:SetText("")
-				self.buttons.oiloh.count:SetText("")
-			elseif oilCount and oilCount > 0 then
-				if not InCombatLockdown() then
-					local itemName = GetItemInfo(lastWeaponEnchantItem)
-					if itemName then
-						self.buttons.oil.click:SetAttribute("item", itemName)
-						self.buttons.oil.click:Show()
-						self.buttons.oil.click.IsON = true
-						if 
-							mainHandExpiration and 
-							(lastWeaponEnchantItem == 171285 or lastWeaponEnchantItem == 171286) and
-							offhandItemID and not offhandCanBeEnchanted
-						then
-							self.buttons.oil.click:SetAttribute("type", "cancelaura")
+					if enchantInfo.type == 'spell' then
+						local spellName = select(1, GetSpellInfo(enchantInfo.spell))
+						local spellIcon = select(3, GetSpellInfo(enchantInfo.spell))
+
+						button.texture:SetTexture(spellIcon)
+						button.count:SetText("")
+						button.click:SetAttribute("spell", spellName)
+						button.click:SetAttribute("type", "spell")
+
+						button.click:Show()
+						button.click.IsON = true
+
+					elseif enchantInfo.type == 'item' then
+						local itemName = select(1, GetItemInfo(enchantInfo.item))
+						local itemIcon = select(10, GetItemInfo(enchantInfo.item))
+						local itemCount = GetItemCount(enchantInfo.item, false, true)
+
+						local canApplyEnchant = itemCount > 0
+						local canCancelEnchant = expiration and hasEnchant
+						local isEnchantExpiring = expiration and expiration <= 300000
+						enableGlow = canApplyEnchant and (not hasEnchant or isEnchantExpiring)
+
+						button.texture:SetTexture(itemIcon)
+						button.count:SetText(itemCount)
+						button.click:SetAttribute("item", itemName)
+						button.click:SetAttribute("type", ATTRIBUTE_NOOP)
+						button.click:SetAttribute("type", canApplyEnchant and "item" or ATTRIBUTE_NOOP)
+
+						if canApplyEnchant or canCancelEnchant then
+							button.click:Show()
+							button.click.IsON = true
 						else
-							self.buttons.oil.click:SetAttribute("type", "item")
+							button.click:Hide()
+							button.click.IsON = false
 						end
-						self.buttons.oiloh.click:SetAttribute("item", itemName)
-						self.buttons.oiloh.click:Show()
-						self.buttons.oiloh.click.IsON = true
-					else
-						self.buttons.oil.click:Hide()
-						self.buttons.oil.click.IsON = false
-						self.buttons.oiloh.click:Hide()
-						self.buttons.oiloh.click.IsON = false
 					end
 				end
-			else
-				if not InCombatLockdown() then
-					self.buttons.oil.click:Hide()
-					self.buttons.oil.click.IsON = false
-					self.buttons.oiloh.click:Hide()
-					self.buttons.oiloh.click.IsON = false
+	
+				if LCG then
+					if enableGlow then
+						LCG.PixelGlow_Start(button)
+					else
+						LCG.PixelGlow_Stop(button)
+					end
 				end
 			end
+		end
 
-			if LCG then
-				if oilCount and oilCount > 0 and (not hasMainHandEnchant or (mainHandExpiration and mainHandExpiration <= 300000)) then
-					LCG.PixelGlow_Start(self.buttons.oil)
-				else
-					LCG.PixelGlow_Stop(self.buttons.oil)
-				end
-				if oilCount and oilCount > 0 and (not hasOffHandEnchant or (offHandExpiration and offHandExpiration <= 300000)) then
-					LCG.PixelGlow_Start(self.buttons.oiloh)
-				else
-					LCG.PixelGlow_Stop(self.buttons.oiloh)
-				end
-			end
+		local hasMainHandEnchant, mainHandExpiration, mainHandCharges, mainHandEnchantID, hasOffHandEnchant, offHandExpiration, offHandCharges, offHandEnchantID = GetWeaponEnchantInfo()
+		UpdateWeaponEnchantButton(self.buttons.oil, hasMainHandEnchant, mainHandEnchantID, mainHandExpiration, "MainHandWeaponEnch")
+		if offhandCanBeEnchanted then
+			UpdateWeaponEnchantButton(self.buttons.oiloh, hasOffHandEnchant, offHandEnchantID, offHandExpiration, "OffHandWeaponEnch")
 		end
 
 		local runeCount = GetItemCount(181468,false,true)
