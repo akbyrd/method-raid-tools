@@ -3110,10 +3110,10 @@ if (not ExRT.isClassic) and UnitLevel'player' >= 60 then
 			button.click:Hide()
 			button.click:RegisterForClicks("AnyDown")
 			if i == 4 or i == 7 then
-				button.click:SetAttribute("type", "item")
+				button.click:SetAttribute("type1", "item")
 				button.click:SetAttribute("target-slot", i == 4 and "16" or "17")
 			else
-				button.click:SetAttribute("type", "macro")
+				button.click:SetAttribute("type1", "macro")
 			end
 	
 			button.click:SetScript("OnEnter",ButtonOnEnter)
@@ -3361,7 +3361,7 @@ if (not ExRT.isClassic) and UnitLevel'player' >= 60 then
 						button.texture:SetTexture(spellIcon)
 						button.count:SetText("")
 						button.click:SetAttribute("spell", spellName)
-						button.click:SetAttribute("type", "spell")
+						button.click:SetAttribute("type1", "spell")
 
 						button.click:Show()
 						button.click.IsON = true
@@ -3380,7 +3380,8 @@ if (not ExRT.isClassic) and UnitLevel'player' >= 60 then
 						button.count:SetText(itemCount)
 						button.click:SetAttribute("item", itemName)
 						button.click:SetAttribute("type", ATTRIBUTE_NOOP)
-						button.click:SetAttribute("type", canApplyEnchant and "item" or ATTRIBUTE_NOOP)
+						button.click:SetAttribute("type1", canApplyEnchant and "item" or ATTRIBUTE_NOOP)
+						button.click:SetAttribute("type2", canCancelEnchant and "cancelaura" or ATTRIBUTE_NOOP)
 
 						if canApplyEnchant or canCancelEnchant then
 							button.click:Show()
@@ -3470,8 +3471,8 @@ if (not ExRT.isClassic) and UnitLevel'player' >= 60 then
 			end
 			if not InCombatLockdown() then
 				local spellName = GetSpellInfo(192106)
-				self.buttons.class.click:SetAttribute("type", "spell")
 				self.buttons.class.click:SetAttribute("spell", spellName)
+				self.buttons.class.click:SetAttribute("type1", "spell")
 				self.buttons.class.click:Show()
 				self.buttons.class.click.IsON = true
 			end
