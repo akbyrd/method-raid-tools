@@ -3363,6 +3363,9 @@ if (not ExRT.isClassic) and UnitLevel'player' >= 60 then
 						local spellName = select(1, GetSpellInfo(enchantInfo.spell))
 						local spellIcon = select(3, GetSpellInfo(enchantInfo.spell))
 
+						local isEnchantExpiring = expiration and expiration <= 300000
+						enableGlow = (not hasEnchant or isEnchantExpiring)
+
 						button.texture:SetTexture(spellIcon)
 						button.count:SetText("")
 						button.click:SetAttribute("spell", spellName)
