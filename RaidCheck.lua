@@ -3036,6 +3036,8 @@ local RC_Consumables = {
 
 if (not ExRT.isClassic) and UnitLevel'player' >= 60 then
 	local consumables_size = 44
+	local consumables_padding = 2
+	local consumables_zoom = 1.3
 
 	module.consumables = CreateFrame("Frame","MRTConsumables",ReadyCheckListenerFrame)
 	module.consumables:SetPoint("BOTTOM",ReadyCheckListenerFrame,"TOP",0,5)
@@ -3084,12 +3086,15 @@ if (not ExRT.isClassic) and UnitLevel'player' >= 60 then
 		if i == 1 then
 			button:SetPoint("LEFT",0,0)
 		else
-			button:SetPoint("LEFT",module.consumables.buttons[i-1],"RIGHT",0,0)
+			button:SetPoint("LEFT",module.consumables.buttons[i-1],"RIGHT",consumables_padding,0)
 		end
 	
 		button.texture = button:CreateTexture()
 		button.texture:SetAllPoints()
-	
+		local zmin = 0.5 - (0.5/consumables_zoom)
+		local zmax = 0.5 + (0.5/consumables_zoom)
+		button.texture:SetTexCoord(zmin, zmax, zmin, zmax)
+
 		button.statustexture = button:CreateTexture(nil,"OVERLAY")
 		button.statustexture:SetPoint("CENTER")
 		button.statustexture:SetSize(consumables_size/2,consumables_size/2)
@@ -3327,13 +3332,13 @@ if (not ExRT.isClassic) and UnitLevel'player' >= 60 then
 				self.buttons.oiloh:Show()
 				totalButtons = totalButtons + 1
 				self.buttons.oiloh:ClearAllPoints()
-				self.buttons.oiloh:SetPoint("LEFT",self.buttons.oil,"RIGHT",0,0)
+				self.buttons.oiloh:SetPoint("LEFT",self.buttons.oil,"RIGHT",consumables_padding,0)
 				self.buttons.rune:ClearAllPoints()
-				self.buttons.rune:SetPoint("LEFT",self.buttons.oiloh,"RIGHT",0,0)
+				self.buttons.rune:SetPoint("LEFT",self.buttons.oiloh,"RIGHT",consumables_padding,0)
 			else
 				self.buttons.oiloh:Hide()
 				self.buttons.rune:ClearAllPoints()
-				self.buttons.rune:SetPoint("LEFT",self.buttons.oil,"RIGHT",0,0)
+				self.buttons.rune:SetPoint("LEFT",self.buttons.oil,"RIGHT",consumables_padding,0)
 			end
 		end
 
@@ -3497,7 +3502,7 @@ if (not ExRT.isClassic) and UnitLevel'player' >= 60 then
 
 
 		if not InCombatLockdown() then
-			self:SetWidth(consumables_size*totalButtons)
+			self:SetWidth(consumables_size*totalButtons + consumables_padding*(totalButtons-1))
 		end
 	end
 
